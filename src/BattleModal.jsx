@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Dialog, DialogTitle, DialogContent, Typography, LinearProgress } from '@mui/material';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
-function BattleModal({ userPokemon, onClose, onBattleEnd, updateBattleHistory }) {
+function BattleModal({ userPokemon, onClose, onBattleEnd }) {
   const [opponentPokemon, setOpponentPokemon] = useState(null);
   const [userCurrentHp, setUserCurrentHp] = useState(userPokemon.stats[0].base_stat);
   const [opponentCurrentHp, setOpponentCurrentHp] = useState(null);
@@ -17,7 +17,6 @@ function BattleModal({ userPokemon, onClose, onBattleEnd, updateBattleHistory })
         const response = await axios.get(`http://localhost:3001/api/pokemon-data/${randomId}`);
         const data = response.data;
         setOpponentPokemon(data);
-        setOpponentCurrentHp(data.stats[0].base_stat);
       } catch (error) {
         console.error(error);
         toast.error("Failed to fetch opponent Pokémon data!");
@@ -27,77 +26,87 @@ function BattleModal({ userPokemon, onClose, onBattleEnd, updateBattleHistory })
     fetchOpponentPokemon();
   }, []);
 
-  const logMessage = (message) => {
-    setBattleLog((prevBattleLog) => [...prevBattleLog, message]);
-  };
-
-  useEffect(() => {
-    if (isBattling) {
-      if (userCurrentHp > 0 && opponentCurrentHp > 0) {
-        setTimeout(() => performBattle(), 1000);
-      } else {
-        setIsBattling(false);
-      }
-    }
-  }, [isBattling, userCurrentHp, opponentCurrentHp]);
-  
-  const performBattle = () => {
-    const logMessage = (message) => {
+  const logMessage = useCallback(
+    (message) => {
       setBattleLog((prevBattleLog) => [...prevBattleLog, message]);
+    },
+    [setBattleLog]
+  );
+
+  const performBattle = async () => {
+    setIsBattling(true);
+
+    const battleRound = async () => {
+      // Determine turn order based on the speed stat
+      const userSpeed = userPokemon.stats.find((stat) => stat.stat && stat.stat.name === "speed").base_stat;
+const opponentSpeed = opponentPokemon.stats.find((stat) => stat.stat && stat.stat.name === "speed").base_stat;
+      let userTurn = userSpeed >= opponentSpeed;
+  
+      const attacker = userTurn ? userPokemon : opponentPokemon;
+      const defender = userTurn ? opponentPokemon : userPokemon;
+      const attackStat = attacker.stats[1].base_stat;
+      const defenseStat = defender.stats[2].base_stat;
+      const damage = Math.max(1, Math.floor((attackStat / defenseStat) * 10));
+  
+      if (userTurn) {
+        setOpponentCurrentHp((prevHp) => {
+          const newHp = Math.max(0, prevHp - damage);
+          logMessage(`${attacker.name} attacked ${defender.name} for ${damage} damage!`);
+          if (newHp === 0) {
+            logMessage(`${userPokemon.name} won the battle!`);
+            updateBattleHistory(userPokemon._id, {
+              opponent: opponentPokemon.name,
+              result: 'Won',
+              remainingHp: userCurrentHp,
+            });
+            setIsBattling(false);
+          } else {
+            setTimeout(battleRound, 1000);
+          }
+          return newHp;
+        });
+      } else {
+        setUserCurrentHp((prevHp) => {
+          const newHp = Math.max(0, prevHp - damage);
+          logMessage(`${attacker.name} attacked ${defender.name} for ${damage} damage!`);
+          if (newHp === 0) {
+            logMessage(`${userPokemon.name} lost the battle.`);
+            updateBattleHistory(userPokemon._id, {
+              opponent: opponentPokemon.name,
+              result: 'Lost',
+              remainingHp: userCurrentHp,
+            });
+            setIsBattling(false);
+          } else {
+            setTimeout(battleRound, 1000);
+          }
+          return newHp;
+        });
+      }
     };
   
-    const userSpeedStat = userPokemon.stats.find((stat) => stat.stat && stat.stat.name === "speed");
-    const userSpeed = userSpeedStat ? userSpeedStat.base_stat : 0;
-    const opponentSpeedStat = opponentPokemon.stats.find((stat) => stat.stat && stat.stat.name === "speed");
-    const opponentSpeed = opponentSpeedStat ? opponentSpeedStat.base_stat : 0;
-    let userTurn = userSpeed >= opponentSpeed;
-  
-    const attacker = userTurn ? userPokemon : opponentPokemon;
-    const defender = userTurn ? opponentPokemon : userPokemon;
-    const attackStat = attacker.stats[1].base_stat;
-    const defenseStat = defender.stats[2].base_stat;
-    const damage = Math.max(1, Math.floor((attackStat / defenseStat) * 10));
-  
-    if (userTurn) {
-      setOpponentCurrentHp((prevHp) => {
-        const newHp = Math.max(0, prevHp - damage);
-        logMessage(`${attacker.name} attacked ${defender.name} for ${damage} damage!`);
-        if (newHp === 0) {
-          logMessage(`${userPokemon.name} won the battle!`);
-          updateBattleHistory(userPokemon._id, {
-            opponent: opponentPokemon.name,
-            result: 'Won',
-            remainingHp: userCurrentHp,
-          });
-        }
-        return newHp;
-      });
-    } else {
-      setUserCurrentHp((prevHp) => {
-        const newHp = Math.max(0, prevHp - damage);
-        logMessage(`${attacker.name} attacked ${defender.name} for ${damage} damage!`);
-        if (newHp === 0) {
-          logMessage(`${userPokemon.name} lost the battle.`);
-          updateBattleHistory(userPokemon._id, {
-            opponent: opponentPokemon.name,
-            result: 'Lost',
-            remainingHp: userCurrentHp,
-          });
-        }
-        return newHp;
-      });
-    }
+    battleRound();
   };
 
   if (!opponentPokemon) {
     return <div>Loading...</div>;
   }
 
+  const updateBattleHistory = async (pokemonId, battleData) => {
+    try {
+      const response = await axios.put(`http://localhost:3001/api/update-battle-history/${pokemonId}`, battleData);
+      toast.success(response.data.message);
+      onBattleEnd(response.data.data);
+    } catch (error) {
+      toast.error('Failed to update battle history!');
+    }
+  };
+
   return (
     <Dialog open={true} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Battle</DialogTitle>
       <DialogContent>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography>{userPokemon.name}</Typography>
           <Typography>{opponentPokemon.name}</Typography>
         </div>
@@ -127,7 +136,7 @@ function BattleModal({ userPokemon, onClose, onBattleEnd, updateBattleHistory })
             Battling...
           </Button>
         ) : (
-          <Button variant="contained" color="primary" onClick={() => performBattle(userPokemon, opponentPokemon, setUserCurrentHp, setOpponentCurrentHp)}>
+          <Button variant="contained" color="primary" onClick={performBattle}>
             Start Battle
           </Button>
         )}

@@ -3,20 +3,15 @@ import { Button, Typography, Dialog, DialogTitle, DialogContent, DialogActions }
 
 function BattleHistoryModal({ pokemon, onClose }) {
   const renderBattleHistory = () => {
-    if (!pokemon || !pokemon.battleHistory || pokemon.battleHistory.length === 0) {
+    if (!pokemon || pokemon.battleHistory.length === 0) {
       return <Typography>This Pokémon hasn't battled yet!</Typography>;
     }
-  
-    return pokemon.battleHistory.map((history, index) => {
-      if (!history) {
-        return null;
-      }
-      return (
-        <Typography key={index}>
-          Battle {index + 1}: {history.result} against {history.opponent} with {history.remainingHp} HP remaining
-        </Typography>
-      );
-    });
+
+    return pokemon.battleHistory.map((history, index) => (
+      <Typography key={index}>
+        Battle {index + 1}: {history.result} against {history.opponent} with {history.remainingHp} HP remaining
+      </Typography>
+    ));
   };
 
   return (

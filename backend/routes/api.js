@@ -31,6 +31,23 @@ router.get('/pokemon-data/:id', async (req, res) => {
     }
   });
 
+  router.put('/update-pokemon/:id', async (req, res) => {
+    try {
+      const pokemonId = req.params.id;
+      const updatedStats = req.body;
+  
+      const updatedPokemon = await Pokemon.findByIdAndUpdate(pokemonId, { stats: updatedStats }, { new: true });
+  
+      if (!updatedPokemon) {
+        return res.status(404).json({ message: 'Pokémon not found' });
+      }
+  
+      res.status(200).json({ message: 'Pokémon stats updated successfully', data: updatedPokemon });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update Pokémon stats', error: error.message });
+    }
+  });
+
   router.put('/update-battle-history/:id', async (req, res) => {
     try {
       const pokemonId = req.params.id;

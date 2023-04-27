@@ -18,6 +18,7 @@ import './fonts.css';
 import './retroButtons.css';
 import BattleHistoryModal from './BattleHistoryModal';
 import axios from 'axios';
+import EditPokemonModal from './EditPokemonModal';
 
 const Crud = () => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -27,7 +28,7 @@ const Crud = () => {
   const [selectedPokemon, setSelectedPokemon] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showBattleHistoryModal, setShowBattleHistoryModal] = useState(false);
-
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     const fetchPokemonData = async () => {
@@ -51,7 +52,6 @@ const Crud = () => {
         return 'rgba(255, 69, 58, 0.6)';
       case 'water':
         return 'rgba(58, 167, 255, 0.6)';
-      // Add more cases for each type with their respective colors
       default:
         return 'rgba(0, 0, 0, 0.3)';
     }
@@ -69,6 +69,8 @@ const Crud = () => {
       return;
     }
     if (!tableData.some((pokemon) => pokemon.id === newPokemon.id)) {
+      // Convert the types array to an array of type names
+      newPokemon.types = newPokemon.types.map((type) => type.type.name);
       addPokemonToDatabase(newPokemon);
     } else {
       toast.error('This Pokémon already exists in the table!');
@@ -144,6 +146,20 @@ const Crud = () => {
       .join('\n');
   };
 
+  const updatePokemonStats = async (updatedPokemon) => {
+    try {
+      const response = await axios.put(`http://localhost:3001/api/update-pokemon/${updatedPokemon.id}`, updatedPokemon);
+      const updatedTableData = tableData.map((item) =>
+        item.id === updatedPokemon.id ? response.data.data : item
+      );
+      setTableData(updatedTableData);
+      toast.success(response.data.message);
+    } catch (error) {
+      console.error('Failed to update Pokémon stats:', error);
+      toast.error('Failed to update Pokémon stats!');
+    }
+  };
+
   return (
     <div className={styles.container}>
     <AppBar position="sticky" className={styles.appBar}>
@@ -162,7 +178,7 @@ const Crud = () => {
         >
           <Box
             component="img"
-            sx={{ height: 80, marginTop: '0px', marginRight: '-45px' }}
+            sx={{ height: 80, marginTop: '0px', marginRight: '-85px' }}
             alt="Your logo."
             src={PokeIndex}
             className={styles.pokeIndex}
@@ -172,9 +188,10 @@ const Crud = () => {
           variant="contained"
           startIcon={<AddCircleIcon />}
           className={styles.addButton}
+          sx={{backgroundColor: 'green'}}
           onClick={() => setShowAddModal(true)}
         >
-          Add Pokemon
+          Add Pokémon
         </Button>
         {showAddModal && (
           <AddTaskModal
@@ -219,8 +236,8 @@ const Crud = () => {
               </TableCell>
               <TableCell align="center" className={styles.tableText}>{pokemon.name}</TableCell>
               <TableCell align="center" className={styles.tableText}>
-  {pokemon.types?.map((type, index) => (
-    <div key={index}>{type?.type?.name ?? 'N/A'}</div>
+  {pokemon.types?.map((typeName, index) => (
+    <div key={index}>{typeName ?? 'N/A'}</div>
   )) ?? <div>No types available</div>}
 </TableCell>
               <TableCell align="center" className={styles.tableText}>{pokemon.stats?.[0]?.base_stat ?? 'N/A'}</TableCell>
@@ -333,6 +350,13 @@ const Crud = () => {
      updateBattleHistory={updateBattleHistory}
    />
     )}
+    {showEditModal && (
+  <EditPokemonModal
+    pokemon={selectedPokemon}
+    onSave={updatePokemonStats}
+    onClose={() => setShowEditModal(false)}
+  />
+)}
   <Toaster
     position="bottom-right"
     reverseOrder={false}
