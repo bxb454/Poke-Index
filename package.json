@@ -35,6 +35,9 @@
     "client": "npm start --prefix client",
     "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\""
   },
+  "engines" : {
+    "node" : "18.15.0"
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -54,6 +57,7 @@
     ]
   },
   "devDependencies": {
-    "gh-pages": "^5.0.0"
+    "concurrently": "^7.0.0",
+    "nodemon": "^2.0.15"
   }
 }
