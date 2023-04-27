@@ -28,7 +28,7 @@ mongoose.connection.once('open', () => {
 
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, '..', 'build')));
+app.use(express.static(path.join(__dirname, 'build')));
 
 // Catch-all to serve the React app for any other route
 app.get('*', (req, res) => {
