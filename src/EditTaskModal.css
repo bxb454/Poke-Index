@@ -1,0 +1,47 @@
+.edit-modal {
+    width: 20vw;
+    height: 20vh;
+    background-color: rgba(200, 200, 200, 0.326);
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+.edit-modal-content {
+    width: 500px;
+    height: 500px;
+    border-radius: 12px;
+    background-color: white;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    display: flex;
+    flex-direction: column;
+    padding: 25px;
+  }
+
+  .toast {
+    background: #35dd0f;
+    color: #fff;
+    font-size: 20px;
+    width: 34vw;
+    padding: 30px 20px;
+  }
+
+  .background {
+    backdrop-filter: blur(10px);
+    width: 400%;
+    height: 400%;
+    z-index: -1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .add-button {
+    position: top;
+  }

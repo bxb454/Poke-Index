@@ -1,0 +1,81 @@
+
+@keyframes hover {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  .pokemonImage {
+    animation: hover 2s ease-in-out infinite;
+  }
+
+  .selectedPokemon {
+    box-shadow: 0 0 15px var(--box-shadow-color, rgba(0, 0, 0, 0.3));
+    border-radius: 10px;
+  }
+
+  .tableRow {
+    position: relative;
+  }
+  
+  .overlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.6);
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .tableRow:hover .overlay {
+    display: flex;
+  }
+
+  .container {
+    font-family: 'Press Start 2P', cursive;
+  background-color: #f0f0f0;
+  }
+  
+  .appBar {
+    background-color: #ef5350;
+    border-bottom: 2px solid #000;
+  }
+  
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .frameworkText {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .addButton {
+    background-color: #4caf50;
+  }
+  
+  .flTable {
+    background-color: #ffffff;
+    border-collapse: collapse;
+    margin-top: 16px;
+    box-shadow: 0 0 20;
+  }
+
+  .tableRow {
+    border-collapse: separate;
+    border-spacing: 0 10px;
+  }
+
+  .tableText {
+    font-family: 'Press Start 2P', cursive;
+  }
+
+
